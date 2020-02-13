@@ -1,17 +1,20 @@
-const { Page } = require('../libraries/tina.min.js')
+const { Page } = require('../libraries/tina/index')
 const { fetchUser } = require('../api')
+
+// import { Page } from '../../../src/index'
+// import { fetchUser } from '../api'
 
 Page.define({
   data: {
     name: 'Tina',
     surname: 'S',
   },
-  compute ({ name, surname }) {
+  compute({ name, surname }) {
     return {
       fullname: `${name} ${surname}`
     }
   },
-  onLoad () {
+  onLoad() {
     fetchUser()
       .then(({ name, surname }) => this.setData({
         name: 'hello',
@@ -19,7 +22,7 @@ Page.define({
       }))
   },
   methods: {
-    sayHi () {
+    sayHi() {
       wx.showModal({
         title: 'Hi!',
         content: this.data.fullname,
