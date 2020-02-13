@@ -1,4 +1,4 @@
-import { pick, without, mapObject, values } from '../utils/functions'
+import { pick, without, mapObject, values, fromPairs } from '../utils/functions'
 import { prependHooks } from '../utils/helpers'
 import * as wxOptionsGenerator from '../utils/wx-options-generator'
 import Basic from './basic'
@@ -15,21 +15,35 @@ const ADDON_BEFORE_HOOKS = {
 // 原生 hooks + tina hooks
 const PAGE_HOOKS = [...MINA_PAGE_HOOKS, ...values(ADDON_BEFORE_HOOKS)]
 
+const PAGE_INITIAL_OPTIONS = {
+  mixins: [],
+  data: {},
+  compute() {},
+  // hooks: return { beforeLoad: [], ...... }
+  ...fromPairs(PAGE_HOOKS.map((name) => [name, []])),
+  methods: {},
+}
+
 class Page extends Basic {
+  static mixins = []
+
   static define(options = {}) {
     // use mixins
-    options = this.mix(options)
+    options = this.mix(PAGE_INITIAL_OPTIONS, [...this.mixins, ...(options.mixins || []), options])
 
     // create wx-Page options
     let page = {
       ...wxOptionsGenerator.methods(options.methods),
-      // ...wxOptionsGenerator.lifecycles(
-      //   MINA_PAGE_HOOKS.filter((name) => options[name].length),
-      //   (name) => ADDON_BEFORE_HOOKS[name]
-      // ),
+      ...wxOptionsGenerator.lifecycles(
+        MINA_PAGE_HOOKS.filter((name) => {// 过滤出 options 中的生命周期
+          return options[name].length
+        }),
+        (name) => ADDON_BEFORE_HOOKS[name]
+      ),
     }
 
-    // 对象合并，加一个全局 onLoad，在开发者的 onLoad 前执行
+    // 对象合并，加一个全局 onLoad
+    // handlers.onLoad -> 当前 page 变量的 onLoad -> tina-page.onLoad
     page = prependHooks(page, {
       onLoad() {
         // this 是小程序 page 实例
@@ -56,12 +70,15 @@ class Page extends Basic {
         return {}
       },
       ...options.methods,
-      ...mapObject(pick(options, PAGE_HOOKS), () => function (...args) {
-        // todo
+      // 用于代理所有生命周期
+      ...mapObject(pick(options, PAGE_HOOKS), (handlers) => function (...args) {
+        return handlers.reduce((memory, handler) => {
+          return handler.apply(this, args.concat(memory))
+        }, void 0)
       }),
     }
 
-    // apply members into instance
+    // 代理所有方法 + 生命周期
     for (let name in members) {
       this[name] = members[name]
     }
