@@ -1,6 +1,7 @@
 function addHooks (context, handlers, isPrepend = false) {
   let result = {}
   for (let name in handlers) {
+    // 改写 hook 方法
     result[name] = function handler (...args) {
       // 小程序运行时, this 是小程序的 this
       if (isPrepend) {
