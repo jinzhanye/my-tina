@@ -31,3 +31,40 @@ export function lifecycles(hooks, getBeforeHookName) {
     ]
   }))
 }
+
+export function properties(object) {
+  // original 原 observer
+  function wrap(original) {
+    return function observer(...args) {
+      let context = this.__tina_instance__
+      // 触发 compute 更新
+      context.setData()
+      // 执行原 observer
+      if (typeof original === 'string') {
+        return context[original].apply(context, args)
+      }
+      if (typeof original === 'function') {
+        return original.apply(context, args)
+      }
+    }
+  }
+
+  return mapObject(object || {}, (rule) => {
+    if (typeof rule === 'function' || rule === null) { // myProperty2: String
+      return {
+        type: rule,
+        observer: wrap(),
+      }
+    }
+    // myProperty: { // 属性名
+    //    type: String,
+    //     value: ''
+    // },
+    if (typeof rule === 'object') {
+      return {
+        ...rule,
+        observer: wrap(rule.observer),
+      }
+    }
+  })
+}

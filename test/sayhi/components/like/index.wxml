@@ -1,0 +1,6 @@
+<!--components/like/index.wxml-->
+<view class="container">
+  <text>{{ name }}:</text>
+  <text>{{ totalCount }}</text>
+  <button bind:tap="click"> add count </button>
+</view>

@@ -50,7 +50,7 @@ class Basic {
       }
     }
     next = diff(next, this.data)
-    // log...
+    this.constructor.log('setData', next)
     if (isEmpty(next)) {
       return callback()
     }

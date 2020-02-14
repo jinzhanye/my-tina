@@ -1,14 +1,22 @@
-const { Page } = require('../libraries/tina/index')
+import { Page } from '../libraries/tina/index'
 // const { Page } = require('../libraries/tina')
-const { fetchUser } = require('../api')
+import { fetchUser } from '../api'
+
 
 // import { Page } from '../../../src/index'
 // import { fetchUser } from '../api'
 
+// 开启 debug 模式，可以查看框架内部日志
+// Page.debug =true
+
 const askMixin = {
   methods: {
     ask () {
-      console.log('How was your day?')
+      wx.showModal({
+        title: 'ask!',
+        content: 'ask!!!',
+        showCancel: false,
+      })
     },
   },
 }
