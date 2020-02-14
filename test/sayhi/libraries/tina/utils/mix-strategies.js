@@ -6,7 +6,7 @@ export default {
     if (typeof source === 'object') {
       return {
         ...source,
-        ...extra,
+        ...extra,// mixin 进行的属性优化级比 options 中的属性要高
       }
     }
     return extra
