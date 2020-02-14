@@ -2,6 +2,9 @@ import { isEmpty, pick, mapObject, filterObject } from '../utils/functions'
 import strategies from '../utils/mix-strategies'
 
 class Basic {
+  // 开启 debug 后可以查看 tina 框架内部 log
+  static debug = false
+
   static mixins = []
 
   /**
@@ -24,6 +27,13 @@ class Basic {
     return {
       ...options,
       ...mapObject(mixin, (extra, key) => strategies.merge(options[key], extra)),
+    }
+  }
+
+  static log(behavior, data) {
+    if(this.debug){
+      // this.name 为构造方法名称
+      console.log(`[Tina.${this.name}] - ${behavior}${data ? ': ' : ''}`, data)
     }
   }
 

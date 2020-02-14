@@ -24,10 +24,7 @@ Page.define({
       fullname: `${name} ${surname}`
     }
   },
-  beforeLoad() {
-    console.log(this)
-    console.log('i am beforeLoad...')
-  },
+  beforeLoad() {},
   onLoad() {
     fetchUser()
       .then(({ name, surname }) => this.setData({

@@ -1,4 +1,4 @@
-import { $initial } from '../mixins/index'
+import { $initial, $log } from '../mixins/index'
 import { pick, without, mapObject, values, fromPairs } from '../utils/functions'
 import { prependHooks, linkProperties } from '../utils/helpers'
 import * as wxOptionsGenerator from '../utils/wx-options-generator'
@@ -31,7 +31,7 @@ const PAGE_INITIAL_OPTIONS = {
   methods: {},
 }
 
-const BUILTIN_MIXINS = [$initial]
+const BUILTIN_MIXINS = [$log, $initial]
 
 class Page extends Basic {
   static mixins = []
