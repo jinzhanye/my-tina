@@ -3,7 +3,16 @@ const loaderUtils = require('loader-utils')
 const selectorLoaderPath = require.resolve('./selector')
 const parserLoaderPath = require.resolve('./parser')
 
+const resolve = (module) => require.resolve(module)
+
 const helpers = require('../helpers')
+
+const EXTNAMES = {
+  template: 'wxml',
+  style: 'wxss',
+  script: 'js',
+  config: 'json',
+}
 
 const TYPES_FOR_FILE_LOADER = ['template', 'style', 'config']
 const TYPES_FOR_OUTPUT = ['script']
@@ -42,9 +51,16 @@ module.exports = function () {
           return Promise.resolve()
         }
 
-
+        // '.'
+        let dirname = compose(ensurePosix, helpers.toSafeOutputPath, path.dirname)(path.relative(this.options.context, url))
+        // !!${resolve('file-loader')}?name=${dirname}/[name].${EXTNAMES[type]}!  => !!/Users/jinzhanye/Desktop/dev/github/mini/mina-webpack/example/node_modules/@tinajs/mina-loader/node_modules/file-loader/dist/cjs.js?name=./[name].wxml!
+        // ${getLoaderOf(type, options)}  =>  /Users/jinzhanye/Desktop/dev/github/mini/mina-webpack/example/node_modules/wxml-loader/lib/index.js?{"publicPath":"/"}!
+        // ${selectorLoaderPath}?type=${type}!  =>  /Users/jinzhanye/Desktop/dev/github/mini/mina-webpack/example/node_modules/@tinajs/mina-loader/lib/loaders/selector.js?type=template!
+        // url => /Users/jinzhanye/Desktop/dev/github/mini/mina-webpack/example/src/app.mina
+        let request = `!!${resolve('file-loader')}?name=${dirname}/[name].${EXTNAMES[type]}!${getLoaderOf(type, options)}${selectorLoaderPath}?type=${type}!${url}`
+        return loadModule(request)
       })).then(()=> {
-        // 返回 script 类型文件的请求
+        // 未清楚为什么 script 类型要等待其他类型 build module 完成后再回调，经测试其实不这么做也不会影响结果
         done(null, output)
       })
     })

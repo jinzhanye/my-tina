@@ -80,7 +80,7 @@ selector-loader 单独抽出一个type的配置 -> wxml-loader -> file-loader �
 ../node_modules/@tinajs/mina-loader/lib/loaders/selector.js?type=style!
 ./app.mina 56 bytes [built]
 
-parser-loader -> selector-loader 单独抽出一个type的配置 -> css-loader -> extract-loader -> file-loader 输出文件
+selector-loader 单独抽出一个type的配置 -> css-loader -> extract-loader -> file-loader 输出文件
 
 
 
