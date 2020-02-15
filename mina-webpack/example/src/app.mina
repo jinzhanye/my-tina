@@ -1,0 +1,23 @@
+<config>
+{
+  "tabBar": {}
+}
+</config>
+
+<template>
+  <page> hi dalang </page>
+</template>
+
+<script>
+App({
+  onLaunch () {
+    console.log('Hello from my page')
+  }
+})
+</script>
+
+<style>
+page {
+  background: #fff;
+}
+</style>
