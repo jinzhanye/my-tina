@@ -40,19 +40,22 @@ class Page extends Basic {
     // use mixins
     // this 是 function Page(){xxx}，因为 define 是这样被调用的 Page.define
     options = this.mix(PAGE_INITIAL_OPTIONS, [...BUILTIN_MIXINS, ...this.mixins, ...(options.mixins || []), options])
+
+    // 过滤出 options 中使用的生命周期的名称
+    const optionsHooks = MINA_PAGE_HOOKS.filter((name) => {
+      return options[name].length
+    })
+
     // create wx-Page options
     let page = {
       ...wxOptionsGenerator.methods(options.methods),
       ...wxOptionsGenerator.lifecycles(
-        MINA_PAGE_HOOKS.filter((name) => {// 过滤出 options 中的生命周期
-          return options[name].length
-        }),
+        optionsHooks,
         (name) => ADDON_BEFORE_HOOKS[name]
       ),
     }
-
     // 对象合并，加一个全局 onLoad
-    // handlers.onLoad -> 当前 page 变量的 onLoad -> tina-page.onLoad
+    // handlers.onLoad -> 上面的 page 变量的 onLoad -> tina-page.onLoad（开发者 options 里的 onload）
     // 注意 prependHooks 追加的处理方法的执行上下文是 wx-page
     page = prependHooks(page, {
       onLoad() {
@@ -85,8 +88,8 @@ class Page extends Basic {
         return function (...args) {
           // 因为做过 mixin 处理，一个生命周期会有多个处理方法
           return handlers.reduce((memory, handler) => {
-            // todo 此处的 this 是 undefined 是有问题的，应该是 tina-page 才对
-            return handler.apply(this, args.concat(memory))
+            const result = handler.apply(this, args.concat(memory))
+            return result
           }, void 0)
         }
       }),
