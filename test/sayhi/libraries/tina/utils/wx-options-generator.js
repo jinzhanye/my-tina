@@ -12,15 +12,20 @@ export function methods(object) {
   })
 }
 
-// 追加 beforeX 生命周期
+/**
+ * options.methods 中的改变执行上下文为 tina.Page 对象
+ * @param {Array} hooks
+ * @param {Function} getBeforeHookName
+ * @return {Object}
+ */
 export function lifecycles(hooks, getBeforeHookName) {
   return fromPairs(hooks.map((origin) => {
-    let before = getBeforeHookName(origin) // 'beforeLoad'
+    let before = getBeforeHookName(origin) // 例如 'beforeLoad'
     return [
-      origin, // 'load'
+      origin, // 例如 'load'
       function () {
         let context = this.__tina_instance__
-        // 调用 tina-page 的方法
+        // 调用 tina-page 的方法，例如 beforeLoad
         if (before && context[before]) {
           context[before].apply(context, arguments)
         }

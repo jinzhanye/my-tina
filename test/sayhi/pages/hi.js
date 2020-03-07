@@ -10,8 +10,14 @@ import { fetchUser } from '../api'
 // Page.debug =true
 
 const askMixin = {
+  onLoad(query) {
+    return {
+      age: 19,
+      ...query,
+    }
+  },
   methods: {
-    ask () {
+    ask() {
       wx.showModal({
         title: 'ask!',
         content: 'ask!!!',
@@ -32,8 +38,10 @@ Page.define({
       fullname: `${name} ${surname}`
     }
   },
-  beforeLoad() {},
-  onLoad() {
+  beforeLoad(query) {
+    (query || {}).age = 100
+  },
+  onLoad(query) {
     fetchUser()
       .then(({ name, surname }) => this.setData({
         name: 'hello',

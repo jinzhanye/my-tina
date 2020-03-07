@@ -20,14 +20,14 @@ const OVERWRITED_METHODS = ['setData']
 const OVERWRITED_ATTRIBUTES = ['data']
 
 // 原生 hooks + tina hooks
-const PAGE_HOOKS = [...MINA_PAGE_HOOKS, ...values(ADDON_BEFORE_HOOKS)]
+const TINA_PAGE_HOOKS = [...MINA_PAGE_HOOKS, ...values(ADDON_BEFORE_HOOKS)]
 
 const PAGE_INITIAL_OPTIONS = {
   mixins: [],
   data: {},
   compute() {},
   // hooks: return { beforeLoad: [], ...... }
-  ...fromPairs(PAGE_HOOKS.map((name) => [name, []])),
+  ...fromPairs(TINA_PAGE_HOOKS.map((name) => [name, []])),
   methods: {},
 }
 
@@ -36,32 +36,32 @@ const BUILTIN_MIXINS = [$log, $initial]
 class Page extends Basic {
   static mixins = []
 
-  static define(options = {}) {
+  static define(tinaPageOptions = {}) {
     // use mixins
     // this 是 function Page(){xxx}，因为 define 是这样被调用的 Page.define
-    options = this.mix(PAGE_INITIAL_OPTIONS, [...BUILTIN_MIXINS, ...this.mixins, ...(options.mixins || []), options])
+    tinaPageOptions = this.mix(PAGE_INITIAL_OPTIONS, [...BUILTIN_MIXINS, ...this.mixins, ...(tinaPageOptions.mixins || []), tinaPageOptions])
 
-    // 过滤出 options 中使用的生命周期的名称
-    const optionsHooks = MINA_PAGE_HOOKS.filter((name) => {
-      return options[name].length
+    // 过滤出 tinaPageOptions 中使用的生命周期的名称
+    const inUseOptionsHooks = MINA_PAGE_HOOKS.filter((name) => {
+      return tinaPageOptions[name].length
     })
 
     // create wx-Page options
-    let page = {
-      ...wxOptionsGenerator.methods(options.methods),
+    let wxPageOptions = {
+      ...wxOptionsGenerator.methods(tinaPageOptions.methods),
       ...wxOptionsGenerator.lifecycles(
-        optionsHooks,
+        inUseOptionsHooks,
         (name) => ADDON_BEFORE_HOOKS[name]
       ),
     }
     // 对象合并，加一个全局 onLoad
-    // handlers.onLoad -> 上面的 page 变量的 onLoad -> tina-page.onLoad（开发者 options 里的 onload）
-    // 注意 prependHooks 追加的处理方法的执行上下文是 wx-page
-    page = prependHooks(page, {
+    // handlers.onLoad -> 上面的 wxPageOptions 变量的 onLoad -> tina-wxPageOptions.onLoad（开发者 tinaPageOptions 里的 onload）
+    // 注意 prependHooks 追加的处理方法的执行上下文是 wx-wxPage Options
+    wxPageOptions = prependHooks(wxPageOptions, {
       onLoad() {
-        // this 是小程序 page 实例
+        // this 是小程序 wxPageOptions 实例
         // instance 是这个 Page Class 的实例
-        let instance = new Page({ options })
+        let instance = new Page({ tinaPageOptions })
         // 建立关联
         this.__tina_instance__ = instance
         instance.$source = this
@@ -70,21 +70,21 @@ class Page extends Basic {
 
     new globals.Page({
       // without 结果为 ['data']，所以 pick 结果就是开发者的 data 对象, {data:{/**/}}
-      ...pick(options, without(MINA_PAGE_OPTIONS, MINA_PAGE_HOOKS)),
-      ...page,
+      ...pick(tinaPageOptions, without(MINA_PAGE_OPTIONS, MINA_PAGE_HOOKS)),
+      ...wxPageOptions,
     })
   }
 
-  constructor({ options = {} }) {
+  constructor({ tinaPageOptions = {} }) {
     super()
-    // 在 page 中添加 methods、beforeLoad 及除了 data 以外的属性
+    // 在 wxPageOptions 中添加 methods、beforeLoad 及除了 data 以外的属性
     let members = {
-      compute: options.compute || function () {
+      compute: tinaPageOptions.compute || function () {
         return {}
       },
-      ...options.methods,
+      ...tinaPageOptions.methods,
       // 用于代理所有生命周期
-      ...mapObject(pick(options, PAGE_HOOKS), (handlers) => {
+      ...mapObject(pick(tinaPageOptions, TINA_PAGE_HOOKS), (handlers) => {
         return function (...args) {
           // 因为做过 mixin 处理，一个生命周期会有多个处理方法
           return handlers.reduce((memory, handler) => {
@@ -101,7 +101,7 @@ class Page extends Basic {
       // },
     }
 
-    // tina-page 代理所有属性
+    // tina-wxPageOptions 代理所有属性
     for (let name in members) {
       this[name] = members[name]
     }
@@ -114,7 +114,7 @@ class Page extends Basic {
   }
 }
 
-// 将没被 tina  改写的方法、属性全部代理到 tina，调用这些属性/方法时再转发回原 wx 对象处理
+// 将没被 tina 改写的方法、属性全部代理到 tina，调用这些属性/方法时再转发回原 wx 对象处理
 linkProperties({
   TargetClass: Page,
   getSourceInstance(context) {

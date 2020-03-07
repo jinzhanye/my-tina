@@ -3,7 +3,7 @@ function addHooks (context, handlers, isPrepend = false) {
   for (let name in handlers) {
     // 改写 hook 方法
     result[name] = function handler (...args) {
-      // 小程序运行时, this 是 wx-page
+      // 小程序运行时, this 是开发者写的 options 也就是 wx-page
       if (isPrepend) {
         // 执行 tina 追加的 onLoad
         handlers[name].apply(this, args)
@@ -21,6 +21,12 @@ function addHooks (context, handlers, isPrepend = false) {
   }
 }
 
+/**
+ * 在 wx-page 生命周期勾子前追加勾子
+ * @param {Object} context
+ * @param {Array} handlers
+ * @return {Object}
+ */
 export const prependHooks = (context, handlers) => addHooks(context, handlers, true)
 
 export function linkProperties ({ TargetClass, getSourceInstance, properties }) {
@@ -31,7 +37,7 @@ export function linkProperties ({ TargetClass, getSourceInstance, properties }) 
         context[name] = value
       },
       get: function () {
-        // context 是 wx-page/wx-component 对象
+        // context 是 wx-Page/wx-Component 对象
         let context = getSourceInstance(this)
         let member = context[name]
         if (typeof member === 'function') {
