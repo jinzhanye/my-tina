@@ -2,11 +2,14 @@
 
 ## 是什么
 tinaJs 是一款轻巧的渐进式微信小程序框架，不仅能充分利用原生小程序的能力，还易于调试。
-tinaJs 主要是对 Component、Page 两个全局方法进行了封装，本文主要介绍 tinaJS 1.0.0 的 `Paeg.define` 内部做了些什么。
+这个框架主要是对 Component、Page 两个全局方法进行了封装，本文主要介绍 tinaJS 1.0.0 的 `Paeg.define` 内部做了些什么。`Component.define` 与 `Paeg.define`相似，理解 `Paeg.define` 之后自然也就理解 `Component.define`。
 为什么是讲解 1.0.0 ？因为第一个版本的代码相对于最新版本主干内容更更清晰更容易上手。
 
+![](https://tva1.sinaimg.cn/large/00831rSTgy1gcmjsc8os9j309y0a4q31.jpg)
+
 ## 概览
-为了避免混淆 tina 和原生的一些概念，在这里先说明一下一些词的含义
+
+为了避免混淆 tina 和原生的一些概念，这里先说明一下一些词的含义
 
 - wx-Page - 原生 Page 对象
 - tina-Page - `tina/class/page` 这个类
@@ -26,7 +29,7 @@ class Page extends Basic {
     // 构建原生 options 对象
     let wxPageOptions = {/*.....*/}
     
-    // 在原生 onLoad 时做拦截，关联原生 Page 对象和 tina-Page 对象
+    // 在原生 onLoad 时做拦截，关联 wx-Page 对象和 tina-Page 对象
     wxPageOptions = prependHooks(wxPageOptions, {
       onLoad() {
         // this 是小程序 wxPageOptions 实例
@@ -38,7 +41,7 @@ class Page extends Basic {
       }
     })
     
-    // 构建 wx-Page 对象
+    // 构造 wx-Page 对象
     new globals.Page({
        // ...
        ...wxPageOptions,
@@ -59,15 +62,15 @@ class Page extends Basic {
 ## mix
 
 ```js
-tinaPageOptions = this.mix(PAGE_INITIAL_OPTIONS, [...BUILTIN_MIXINS, ...this.mixins, ...(options.mixins || []), options])
+tinaPageOptions = this.mix(PAGE_INITIAL_OPTIONS, [...BUILTIN_MIXINS, ...this.mixins, ...(tinaPageOptions.mixins || []), tinaPageOptions])
 ```
 
-tina 1.0.0 只支持一种合并策略，跟 Vue 的默认合并策略一样
+tinaJs 1.0.0 只支持一种合并策略，跟 Vue 的默认合并策略一样
 
-- 对于 methods 就是后进的覆盖前面的
-- 对于生命周期勾子和特殊勾子（onPullDownRefresh 等），就是变成一个数组，后进的先执行
+- 对于 methods 就是后面的覆盖前面的
+- 对于生命周期勾子和特殊勾子（onPullDownRefresh 等），就是变成一个数组，还是后面的先执行
 
-也就是 options.mixins > Page.mixins（全局 mixin） > BUILTIN_MIXINS。
+也就是 tinaPageOptions.mixins > Page.mixins（全局 mixin） > BUILTIN_MIXINS。
 
 合并后可以得到这样一个对象
 
@@ -89,8 +92,8 @@ tina 1.0.0 只支持一种合并策略，跟 Vue 的默认合并策略一样
   compute: Function,
   created: $log.created,
   // 页面、组件共用
-  data: options.data,
-  methods: options.methods,
+  data: tinaPageOptions.data,
+  methods: tinaPageOptions.methods,
   mixins: [],
 }
 ```
@@ -106,7 +109,7 @@ prependHooks 是作用是在 wxPageOptions[hookName] 执行前追加 handlers[ho
 wxPageOptions = prependHooks(wxPageOptions, {
   onLoad() {
     // this 是 wxPageOptions
-    // instance 是这个 Page Class 的实例
+    // instance 是 tina-Page 实例
     let instance = new Page({ tinaPageOptions })
     // 建立关联
     this.__tina_instance__ = instance
@@ -114,7 +117,8 @@ wxPageOptions = prependHooks(wxPageOptions, {
   }
 })
 
-//  tina/utils/helpers.js
+
+// tina/utils/helpers.js
 
 /**
  * 在 wx-page 生命周期勾子前追加勾子
@@ -122,14 +126,15 @@ wxPageOptions = prependHooks(wxPageOptions, {
  * @param {Array} handlers
  * @return {Object}
  */
-export const prependHooks = (context, handlers) => addHooks(context, handlers, true)
+export const prependHooks = (context, handlers) =>
+ addHooks(context, handlers, true)
 
 function addHooks (context, handlers, isPrepend = false) {
   let result = {}
   for (let name in handlers) {
     // 改写 hook 方法
     result[name] = function handler (...args) {
-      // 小程序运行时, this 是开发者写的 options 也就是 wx-page
+      // 小程序运行时, this 是 wxPageOptions
       if (isPrepend) {
         // 执行 tina 追加的 onLoad
         handlers[name].apply(this, args)
@@ -193,22 +198,15 @@ function addHooks (context, handlers, isPrepend = false) {
   }
 ```
 
-首先是将 `tinaPageOptions` 变成跟 `wxPageOptions` 一样的结构，因为 wxPageOptions 的 methods 和 hooks 都是在 options 的第一层的，所以需要将将 methods 和 hooks 铺平。
+首先是将 `tinaPageOptions` 变成跟 `wxPageOptions` 一样的结构，因为 wxPageOptions 的 `methods` 和 hooks 都是在 options 的第一层的，所以需要将将 methods 和 hooks 铺平。
 又因为 hooks 经过 mixins 处理已经变成了数组，所以需要遍历执行，每个 hooks 的第二个参数都是之前累积的结果。然后通过简单的属性拷贝将所有方法拷贝到 tina-Page 实例。
 
 ## 改变执行上下文
 // 添加映射示例图
 
-上面提到构建一个属性跟 wx-Page 一模一样的 tina-Page 对象，那么为什么要这样呢？
-
-一个框架的作用是什么？我认为是在原生能力之上建立一个能够提高开发效率的抽象层。现在 tina 就是这个抽象层，
+上面提到构建一个属性跟 wx-Page 一模一样的 tina-Page 对象，那么为什么要这样呢？一个框架的作用是什么？我认为是在原生能力之上建立一个能够提高开发效率的抽象层。现在 tina 就是这个抽象层，
 举个例子来说就是我们希望 `methods.foo` 被原生调用时，tina 能在 `methods.foo` 里做更多的事情。所以 tina 需要与原生关联使得所有本来由原生处理的东西转交到 tina 这个抽象层处理。
 那 tina 是如何处理的呢。我们先来看看创建 `wxPageOptions` 的源码 
-
-
-只要有拦截就可以做很多事情
-wx | 中间层 | tina
-tina | 中间层 | wx
 
 ```js
 let wxPageOptions = {
@@ -218,9 +216,7 @@ let wxPageOptions = {
     (name) => ADDON_BEFORE_HOOKS[name]
   ),
  }
- 
- 
-//  
+
 /**
  * wxPageOptions.methods 中的改变执行上下文为 tina.Page 对象
  * @param {Object} object
@@ -235,8 +231,11 @@ export function methods(object) {
 ```
 
 答案就在 `wxOptionsGenerator.methods`。上面说过在 `onLoad` 的时候会绑定 `__tina_instance__` 到 wx-Page，同时 wx-Page 与 tina-Page 的属性都是一模一样的，所以可以转发调用。
-那么开发者在 `methods` 拿到的 `this` 是 `__tina_instance__`，有这个设定，就相当于 tina 在 wx 之上做了一个抽象层。所有主动调用都先经过 tina 再到 wx，
-所有被动调用都经过 tina 处理。
+那么开发者在 `methods` 拿到的 `this` 是 `__tina_instance__`，有这个设定，就相当于 tina 在 wx 之上做了一个抽象层。所有的被动调用都会被 tina 处理。而 
+所有主动调用都先经过 tina 再到 wx，
+所有被动调用都经过 tina 处理。结合下面两个小节会有更好的理解。
+
+![](https://tva1.sinaimg.cn/large/00831rSTgy1gcmjltswf1j30g7086wev.jpg)
 
 ## 追加生命周期勾子
 上面创建 `wxPageOptions` 时有这么一句 `wxOptionsGenerator.lifecycles` 代码，这是 tina 用于在 onLoad 之前加多一个 beforeLoad 生命周期勾子，这个功能是怎么做的呢，我们来看看源码
@@ -288,6 +287,11 @@ Page.mixins = [{
 prependHooks.addHooks.handler -> wx-Page.onLoad，关联 wx-Page、tinaPage -> 回到 prependHooks.addHooks.handler -> lifecycles.wxHook -> tina-Page.beforeLoad -> tina-Page.onLoad
 ```
 
+如下图所示
+
+
+![启动流程](https://tva1.sinaimg.cn/large/00831rSTgy1gcmk6uf3ymj30a00fgmxh.jpg)
+
 ## compute 实现原理
 因为运行时的上下文都被 tina 改为 tina-Page，所以开发者调用的 `this.setData`， 实际上的 tina-Page 的 `setData` 方法，又因为 tina-Page 继承自 Basic，也就调用 Basic 的 setData 方法。下面看看 `setData` 的源码
 
@@ -311,7 +315,7 @@ setData(newer, callback = () => {}) {
 
 从源码可以看到就是每次 `setData` 的时候调用一下 `compute` 更新数据。这是 `compute`  的原理，很容易理解吧。
 
-前面 mixins 小节提到，tina 会合并一些内置选项，可以看到在 `onLoad` 时会调用一下 `this.setData`，为了初始化 compute 属性。
+前面 mixins 小节提到，tina 会合并一些内置选项，可以看到在 `onLoad` 时会调用`this.setData`，为了初始化 compute 属性。
 
 ```js
 // mixins/index.js
