@@ -64,6 +64,7 @@ class Page extends Basic {
 下面针对每个小流程做讲解
 
 ## mix
+tina 的 mixin 是靠 js 对对象做合并实现的，并没有使用原生的 `behaviors`
 
 ```js
 tinaPageOptions = this.mix(PAGE_INITIAL_OPTIONS, [...BUILTIN_MIXINS, ...this.mixins, ...(tinaPageOptions.mixins || []), tinaPageOptions])
@@ -73,8 +74,7 @@ tinaJs 1.0.0 只支持一种合并策略，跟 Vue 的默认合并策略一样
 
 - 对于 methods 就是后面的覆盖前面的
 - 对于生命周期勾子和特殊勾子（onPullDownRefresh 等），就是变成一个数组，还是后面的先执行
-
-也就是 tinaPageOptions.mixins > Page.mixins（全局 mixin） > BUILTIN_MIXINS。
+- 也就是 tinaPageOptions.mixins > Page.mixins（全局 mixin） > BUILTIN_MIXINS
 
 合并后可以得到这样一个对象
 
@@ -334,3 +334,9 @@ export const $initial = {
   onLoad: initial,// 页面加载完成勾子
 }
 ```
+
+## 小结 
+到此基本上把 `Page.define` 主干流程讲完，如有疑问欢迎留言
+
+## 参考
+- [《tina 文档》](https://tina.js.org/#/?id=tinajs)
