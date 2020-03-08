@@ -1,14 +1,9 @@
 import { Page } from '../libraries/tina/index'
-// const { Page } = require('../libraries/tina')
+// import { Page } from '../libraries/dist/tina'
 import { fetchUser } from '../api'
-
-
-// import { Page } from '../../../src/index'
-// import { fetchUser } from '../api'
 
 // 开启 debug 模式，可以查看框架内部日志
 // Page.debug =true
-
 const askMixin = {
   onLoad(query) {
     return {
@@ -42,11 +37,12 @@ Page.define({
     (query || {}).age = 100
   },
   onLoad(query) {
-    fetchUser()
-      .then(({ name, surname }) => this.setData({
+    fetchUser(({ name, surname }) => {
+      this.setData({
         name: 'hello',
         surname: 'world'
-      }))
+      })
+    })
   },
   methods: {
     sayHi() {

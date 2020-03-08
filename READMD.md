@@ -1,11 +1,15 @@
 # tinaJs 源码分析
+![封面](https://tva1.sinaimg.cn/large/00831rSTgy1gcmkgrg0uyj30py0h5gt0.jpg)
+
+目前公司团队小程序框架使用的是 [tinaJs](https://tina.js.org/#/)，这篇文章将讲解这个框架的源码。阅读文章时可以对照着这个[小工程](https://github.com/jinzhanye/my-tina/tree/master/test/sayhi/libraries)阅读源码，这个小工程主要是对 tina 加了更多的注释及示例。
 
 ## 是什么
+
 tinaJs 是一款轻巧的渐进式微信小程序框架，不仅能充分利用原生小程序的能力，还易于调试。
-这个框架主要是对 Component、Page 两个全局方法进行了封装，本文主要介绍 tinaJS 1.0.0 的 `Paeg.define` 内部做了些什么。`Component.define` 与 `Paeg.define`相似，理解 `Paeg.define` 之后自然也就理解 `Component.define`。
+这个框架主要是对 Component、Page 两个全局方法进行了封装，本文主要介绍 [tinaJS 1.0.0]() 的 `Paeg.define` 内部做了些什么。`Component.define` 与 `Paeg.define`相似，理解 `Paeg.define` 之后自然也就理解 `Component.define`。
 为什么是讲解 1.0.0 ？因为第一个版本的代码相对于最新版本主干内容更更清晰更容易上手。
 
-![](https://tva1.sinaimg.cn/large/00831rSTgy1gcmjsc8os9j309y0a4q31.jpg)
+![类图](https://tva1.sinaimg.cn/large/00831rSTgy1gcmjsc8os9j309y0a4q31.jpg)
 
 ## 概览
 
@@ -16,7 +20,7 @@ tinaJs 是一款轻巧的渐进式微信小程序框架，不仅能充分利用�
 - wxPageOptions - 构建原生 Page 实例的 options
 - tinaPageOptions - 构建原生 tina-Page 实例的 options
 
-开局先来预览一下 `Page` 的流程
+开局先来预览一下 `Page.define` 的流程
 
 ```js
 // tina/class/page.js
@@ -102,7 +106,7 @@ tinaJs 1.0.0 只支持一种合并策略，跟 Vue 的默认合并策略一样
 
 ## 关联 wx-Page、tina-Page
 为了绑定 wx-Page 对象，在 wx-onLoad 前追加一个 onLoad。
-prependHooks 是作用是在 wxPageOptions[hookName] 执行前追加 handlers[hookName]，并保证 wxPageOptions[hookName]、handlers[hookName] 的执行上下文是原生运行时的 `this`
+prependHooks 是作用是在 `wxPageOptions[hookName]` 执行前追加 `handlers[hookName]`，并保证 `wxPageOptions[hookName]`、`handlers[hookName]` 的执行上下文是原生运行时的 `this`
 
 ```js
 // tina/class/page
@@ -154,7 +158,7 @@ function addHooks (context, handlers, isPrepend = false) {
 ```
 
 ## 构建 tina-Page
-接下来再来看看 new Page 做了什么
+接下来再来看看 `new Page` 做了什么
 
 ```js
   constructor({ tinaPageOptions = {} }) {
@@ -198,17 +202,16 @@ function addHooks (context, handlers, isPrepend = false) {
   }
 ```
 
-首先是将 `tinaPageOptions` 变成跟 `wxPageOptions` 一样的结构，因为 wxPageOptions 的 `methods` 和 hooks 都是在 options 的第一层的，所以需要将将 methods 和 hooks 铺平。
+首先是将 `tinaPageOptions` 变成跟 `wxPageOptions` 一样的结构，因为 wxPageOptions 的 `methods` 和 `hooks` 都是在 options 的第一层的，所以需要将将 methods 和 hooks 铺平。
 又因为 hooks 经过 mixins 处理已经变成了数组，所以需要遍历执行，每个 hooks 的第二个参数都是之前累积的结果。然后通过简单的属性拷贝将所有方法拷贝到 tina-Page 实例。
 
 ## 改变执行上下文
-// 添加映射示例图
-
 上面提到构建一个属性跟 wx-Page 一模一样的 tina-Page 对象，那么为什么要这样呢？一个框架的作用是什么？我认为是在原生能力之上建立一个能够提高开发效率的抽象层。现在 tina 就是这个抽象层，
 举个例子来说就是我们希望 `methods.foo` 被原生调用时，tina 能在 `methods.foo` 里做更多的事情。所以 tina 需要与原生关联使得所有本来由原生处理的东西转交到 tina 这个抽象层处理。
 那 tina 是如何处理的呢。我们先来看看创建 `wxPageOptions` 的源码 
 
 ```js
+// tina/class/page.js
 let wxPageOptions = {
   ...wxOptionsGenerator.methods(tinaPageOptions.methods),
   ...wxOptionsGenerator.lifecycles(
@@ -217,6 +220,8 @@ let wxPageOptions = {
   ),
  }
 
+
+// tina/class/page.js
 /**
  * wxPageOptions.methods 中的改变执行上下文为 tina.Page 对象
  * @param {Object} object
@@ -230,15 +235,13 @@ export function methods(object) {
 }
 ```
 
-答案就在 `wxOptionsGenerator.methods`。上面说过在 `onLoad` 的时候会绑定 `__tina_instance__` 到 wx-Page，同时 wx-Page 与 tina-Page 的属性都是一模一样的，所以可以转发调用。
-那么开发者在 `methods` 拿到的 `this` 是 `__tina_instance__`，有这个设定，就相当于 tina 在 wx 之上做了一个抽象层。所有的被动调用都会被 tina 处理。而 
-所有主动调用都先经过 tina 再到 wx，
-所有被动调用都经过 tina 处理。结合下面两个小节会有更好的理解。
+答案就在 `wxOptionsGenerator.methods`。上面说过在 `onLoad` 的时候会绑定 `__tina_instance__` 到 wx-Page，同时 wx-Page 与 tina-Page 的属性都是一模一样的，所以调用会被转发到 tina 对应的方法。这就相当于 tina 在 wx 之上做了一个抽象层。所有的被动调用都会被 tina 处理。而且因为上下文是 `__tina_instance__` 的缘故，
+所有主动调用都先经过 tina 再到 wx。结合下面两个小节会有更好的理解。
 
 ![](https://tva1.sinaimg.cn/large/00831rSTgy1gcmjltswf1j30g7086wev.jpg)
 
 ## 追加生命周期勾子
-上面创建 `wxPageOptions` 时有这么一句 `wxOptionsGenerator.lifecycles` 代码，这是 tina 用于在 onLoad 之前加多一个 beforeLoad 生命周期勾子，这个功能是怎么做的呢，我们来看看源码
+上面创建 `wxPageOptions` 时有这么一句 `wxOptionsGenerator.lifecycles` 代码，这是 tina 用于在 `onLoad` 之前加多一个 `beforeLoad` 生命周期勾子，这个功能是怎么做的呢，我们来看看源码
 
 ```js
 // tina/utils/wx-options-generator
@@ -269,7 +272,7 @@ export function lifecycles(hooks, getBeforeHookName) {
 }
 ```
 
-其实就是改写 `onLoad` ，在调用 tina-Page.onLoad 前先调用 tina-Page.beforeLoad。可能有的人会有疑问，为什么要加个 `beforeLoad` 勾子，这跟直接 `onLoad` 里不都一样的么。
+其实就是改写 `onLoad` ，在调用 `tina-Page.onLoad` 前先调用 `tina-Page.beforeLoad`。可能有的人会有疑问，为什么要加个 `beforeLoad` 勾子，这跟直接 `onLoad` 里不都一样的么。
 举个例子，很多时候我们在 `onLoad` 拿到 `query` 之后是不是都要手动去 `decode`，利用全局 `mixins` 和 `beforeLoad`，可以一次性把这个事情做了。
 
 ```js

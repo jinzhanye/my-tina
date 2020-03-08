@@ -56,11 +56,11 @@ class Page extends Basic {
     }
     // 对象合并，加一个全局 onLoad
     // prependHooks.addHooks.handler -> wx-Page.onLoad，关联 wx-Page、tinaPage -> 回到 prependHooks.addHooks.handler -> lifecycles.wxHook -> tina-Page.beforeLoad -> tina-Page.onLoad
-    // 注意 prependHooks 追加的处理方法的执行上下文是 wx-wxPage Options
+    // 注意 prependHooks 追加的处理方法的执行上下文是 wx-Page 实例
     wxPageOptions = prependHooks(wxPageOptions, {
       onLoad() {
-        // this 是小程序 wxPageOptions 实例
-        // instance 是这个 Page Class 的实例
+        // this 是小程序 wx-Page 实例
+        // instance 是这个 tina-Page 实例
         let instance = new Page({ tinaPageOptions })
         // 建立关联
         this.__tina_instance__ = instance
@@ -77,7 +77,6 @@ class Page extends Basic {
 
   constructor({ tinaPageOptions = {} }) {
     super()
-    // 在 wxPageOptions 中添加 methods、beforeLoad 及除了 data 以外的属性
     let members = {
       compute: tinaPageOptions.compute || function () {
         return {}

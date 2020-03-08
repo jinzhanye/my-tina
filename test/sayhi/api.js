@@ -1,7 +1,8 @@
-const wxio = require('./libraries/wxio.es6.min.js')
-
-export const fetchUser = function () {
-  return wxio.request({
+export const fetchUser = function (cb) {
+  return wx.request({
     url: 'https://uinames.com/api/',
-  }).then(({ data }) => data)
+    success({ data }) {
+      cb(data)
+    }
+  })
 }
