@@ -55,7 +55,7 @@ class Page extends Basic {
       ),
     }
     // 对象合并，加一个全局 onLoad
-    // handlers.onLoad -> 上面的 wxPageOptions 变量的 onLoad -> tina-wxPageOptions.onLoad（开发者 tinaPageOptions 里的 onload）
+    // prependHooks.addHooks.handler -> wx-Page.onLoad，关联 wx-Page、tinaPage -> 回到 prependHooks.addHooks.handler -> lifecycles.wxHook -> tina-Page.beforeLoad -> tina-Page.onLoad
     // 注意 prependHooks 追加的处理方法的执行上下文是 wx-wxPage Options
     wxPageOptions = prependHooks(wxPageOptions, {
       onLoad() {
