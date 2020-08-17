@@ -30,7 +30,7 @@
     "extract-loader": "1.0.1",
     "file-loader": "1.1.5",
     "loader-utils": "1.1.0",
-    "lodash.merge": "4.6.0",
+    "lodash.merge": "4.6.2",
     "object-path": "0.11.4",
     "p-all": "1.0.0",
     "p-map": "1.2.0",
