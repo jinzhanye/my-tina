@@ -2,7 +2,6 @@ const loaderUtils = require('loader-utils')
 
 const selectorLoaderPath = require.resolve('./selector')
 const parserLoaderPath = require.resolve('./parser')
-
 const resolve = (module) => require.resolve(module)
 
 const helpers = require('../helpers')
@@ -21,22 +20,31 @@ module.exports = function () {
   const done = this.async()
 
   const options = {}
-
+  // 获取剩余请求资源的路径，也就是 xx.mina 的路径
+  // 例如 /Users/jinzhanye/Desktop/dev/github/mini/mina-webpack/example/src/app.mina
   const url = loaderUtils.getRemainingRequest(this)
+
+  // 前置 !! 表示只执行行内 loader，其他 loader 都不执行
+  // 拼接上 parserLoader 的路径
   const parsedUrl = `!!${parserLoaderPath}!${url}`
 
   const loadModule = helpers.loadModule.bind(this)
 
   const getLoaderOf = (type, options) => {}
 
+
+
   loadModule(parsedUrl)
     .then((source) => {
       // parts 为以下对象
       // {
+      //   config: {
+      //     content: '.....'
+      //   }
       //   wxml: {
       //     content: '.....'
       //   }
-      //   .....
+      //
       // }
       let parts = this.exec(source, parsedUrl)
 
@@ -51,7 +59,7 @@ module.exports = function () {
           return Promise.resolve()
         }
 
-        // '.'
+        // dirname 为 '.'
         let dirname = compose(ensurePosix, helpers.toSafeOutputPath, path.dirname)(path.relative(this.options.context, url))
         // !!${resolve('file-loader')}?name=${dirname}/[name].${EXTNAMES[type]}!  => !!/Users/jinzhanye/Desktop/dev/github/mini/mina-webpack/example/node_modules/@tinajs/mina-loader/node_modules/file-loader/dist/cjs.js?name=./[name].wxml!
         // ${getLoaderOf(type, options)}  =>  /Users/jinzhanye/Desktop/dev/github/mini/mina-webpack/example/node_modules/wxml-loader/lib/index.js?{"publicPath":"/"}!
@@ -65,3 +73,4 @@ module.exports = function () {
       })
     })
 }
+
