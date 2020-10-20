@@ -31,7 +31,7 @@
     "file-loader": "1.1.5",
     "loader-utils": "1.1.0",
     "lodash.merge": "4.6.0",
-    "object-path": "0.11.4",
+    "object-path": "0.11.5",
     "p-all": "1.0.0",
     "p-map": "1.2.0",
     "replace-ext": "1.0.0",
